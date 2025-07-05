@@ -60,4 +60,43 @@ class Finance {
         $stmt = $this->db->prepare("DELETE FROM transactions WHERE id = ?");
         return $stmt->execute([$id]);
     }
+    
+    public function searchTransactions($search, $category = null, $type = null, $limit = 50) {
+        $sql = "SELECT * FROM transactions WHERE (description LIKE ? OR category LIKE ?)";
+        $params = ["%$search%", "%$search%"];
+        
+        if ($category) {
+            $sql .= " AND category = ?";
+            $params[] = $category;
+        }
+        
+        if ($type) {
+            $sql .= " AND type = ?";
+            $params[] = $type;
+        }
+        
+        $sql .= " ORDER BY date DESC, created_at DESC LIMIT ?";
+        $params[] = $limit;
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function getMonthlyReport($year = null, $month = null) {
+        if (!$year) $year = date('Y');
+        if (!$month) $month = date('m');
+        
+        $stmt = $this->db->prepare("SELECT 
+            type, 
+            category,
+            SUM(amount) as total,
+            COUNT(*) as count
+            FROM transactions 
+            WHERE strftime('%Y', date) = ? AND strftime('%m', date) = ?
+            GROUP BY type, category
+            ORDER BY type, total DESC");
+        $stmt->execute([$year, $month]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+require_once '../config/sample-data.php';
 require_once '../src/Todo.php';
 require_once '../src/Finance.php';
 
@@ -7,6 +8,7 @@ require_once '../src/Finance.php';
 $database = new Database();
 $todo = new Todo($database);
 $finance = new Finance($database);
+$sampleLoader = new SampleDataLoader($database);
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -45,6 +47,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $finance->deleteTransaction($_POST['id']);
             echo json_encode(['success' => $result]);
             exit;
+            
+        case 'load_sample_data':
+            $result = $sampleLoader->loadSampleData();
+            echo json_encode(['success' => $result]);
+            exit;
+            
+        case 'clear_sample_data':
+            $result = $sampleLoader->clearSampleData();
+            echo json_encode(['success' => $result]);
+            exit;
     }
 }
 
@@ -66,6 +78,7 @@ $categoryStats = $finance->getCategoryStats();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -81,6 +94,9 @@ $categoryStats = $finance->getCategoryStats();
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#finance">Finance</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#charts">Charts</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#todos">Todos</a>
@@ -169,6 +185,68 @@ $categoryStats = $finance->getCategoryStats();
                     </div>
                 </div>
             </div>
+            
+            <!-- Sample Data Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-database"></i> Sample Data</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Load sample financial transactions and todos to explore the application features.</p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success" onclick="loadSampleData()">
+                                    <i class="fas fa-download"></i> Load Sample Data
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="clearSampleData()">
+                                    <i class="fas fa-trash"></i> Clear All Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Tab -->
+        <div id="charts" class="tab-content">
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie"></i> Expenses by Category</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="expenseChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-line"></i> Monthly Balance Trend</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="balanceChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-bar"></i> Income vs Expenses</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="incomeExpenseChart" width="400" height="150"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Finance Tab -->
@@ -214,7 +292,12 @@ $categoryStats = $finance->getCategoryStats();
                 <div class="col-md-8">
                     <div class="card">
                         <div class="card-header">
-                            <h5><i class="fas fa-list"></i> Recent Transactions</h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5><i class="fas fa-list"></i> Recent Transactions</h5>
+                                <div class="search-box">
+                                    <input type="text" class="form-control form-control-sm" id="transactionSearch" placeholder="Search transactions..." style="width: 200px;">
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -280,7 +363,12 @@ $categoryStats = $finance->getCategoryStats();
                 <div class="col-md-8">
                     <div class="card">
                         <div class="card-header">
-                            <h5><i class="fas fa-tasks"></i> Your Todos</h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5><i class="fas fa-tasks"></i> Your Todos</h5>
+                                <div class="search-box">
+                                    <input type="text" class="form-control form-control-sm" id="todoSearch" placeholder="Search todos..." style="width: 200px;">
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div id="todosList">
@@ -310,5 +398,6 @@ $categoryStats = $finance->getCategoryStats();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/app.js"></script>
+    <script src="../assets/js/search.js"></script>
 </body>
 </html>

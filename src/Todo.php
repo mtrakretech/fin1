@@ -35,4 +35,20 @@ class Todo {
             FROM todos");
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    
+    public function search($search) {
+        $stmt = $this->db->prepare("SELECT * FROM todos WHERE title LIKE ? OR description LIKE ? ORDER BY created_at DESC");
+        $stmt->execute(["%$search%", "%$search%"]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function getByStatus($completed = null) {
+        if ($completed === null) {
+            return $this->getAll();
+        }
+        
+        $stmt = $this->db->prepare("SELECT * FROM todos WHERE completed = ? ORDER BY created_at DESC");
+        $stmt->execute([$completed ? 1 : 0]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

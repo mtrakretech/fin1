@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize app
     updateFinanceCategories();
+    
+    // Initialize charts if on charts tab
+    if (document.getElementById('charts')) {
+        setTimeout(initializeCharts, 500);
+    }
 });
 
 // Tab Navigation
@@ -34,6 +39,11 @@ function setupTabNavigation() {
             const targetContent = document.getElementById(targetTab);
             if (targetContent) {
                 targetContent.classList.add('active');
+                
+                // Initialize charts if charts tab is selected
+                if (targetTab === 'charts') {
+                    setTimeout(initializeCharts, 100);
+                }
             }
         });
     });
@@ -356,5 +366,211 @@ if (navbarToggler && navbarCollapse) {
                 navbarCollapse.classList.remove('show');
             }
         });
+    });
+}
+
+// Sample Data Functions
+function loadSampleData() {
+    if (!confirm('This will load sample financial transactions and todos. Continue?')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('action', 'load_sample_data');
+    
+    fetch('index.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Sample data loaded successfully!', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showAlert('Sample data already exists or failed to load.', 'warning');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('An error occurred while loading sample data.', 'danger');
+    });
+}
+
+function clearSampleData() {
+    if (!confirm('This will delete ALL transactions and todos. This action cannot be undone. Continue?')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('action', 'clear_sample_data');
+    
+    fetch('index.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('All data cleared successfully!', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showAlert('Failed to clear data.', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('An error occurred while clearing data.', 'danger');
+    });
+}
+
+// Chart Functions
+function initializeCharts() {
+    // Only initialize if Chart.js is loaded and we're on the charts tab
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not loaded');
+        return;
+    }
+    
+    // Get chart canvases
+    const expenseChartCanvas = document.getElementById('expenseChart');
+    const balanceChartCanvas = document.getElementById('balanceChart');
+    const incomeExpenseChartCanvas = document.getElementById('incomeExpenseChart');
+    
+    if (!expenseChartCanvas || !balanceChartCanvas || !incomeExpenseChartCanvas) {
+        return;
+    }
+    
+    // Fetch data for charts (this would ideally be passed from PHP or fetched via AJAX)
+    createExpenseChart(expenseChartCanvas);
+    createBalanceChart(balanceChartCanvas);
+    createIncomeExpenseChart(incomeExpenseChartCanvas);
+}
+
+function createExpenseChart(canvas) {
+    const ctx = canvas.getContext('2d');
+    
+    // Sample data - in a real app, this would come from the server
+    const data = {
+        labels: ['Food', 'Transportation', 'Utilities', 'Entertainment', 'Shopping'],
+        datasets: [{
+            data: [300, 120, 340, 100, 160],
+            backgroundColor: [
+                '#dc3545',
+                '#ffc107', 
+                '#6c757d',
+                '#17a2b8',
+                '#e83e8c'
+            ],
+            borderWidth: 0
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function createBalanceChart(canvas) {
+    const ctx = canvas.getContext('2d');
+    
+    // Sample data for the last 6 months
+    const data = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+            label: 'Balance',
+            data: [1000, 1200, 800, 1500, 1800, 2100],
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createIncomeExpenseChart(canvas) {
+    const ctx = canvas.getContext('2d');
+    
+    const data = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [
+            {
+                label: 'Income',
+                data: [3500, 3700, 3500, 3800, 3600, 3900],
+                backgroundColor: '#28a745',
+                borderColor: '#28a745',
+                borderWidth: 1
+            },
+            {
+                label: 'Expenses',
+                data: [2500, 2500, 2700, 2300, 1800, 1800],
+                backgroundColor: '#dc3545',
+                borderColor: '#dc3545',
+                borderWidth: 1
+            }
+        ]
+    };
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
     });
 }
