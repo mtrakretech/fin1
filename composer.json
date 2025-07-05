@@ -1,0 +1,11 @@
+{
+    "name": "fin1/personal-finance-todo",
+    "description": "Personal Finance and Todo Management App",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Developer"
+        }
+    ],
+    "require": {}
+}
